@@ -11,15 +11,15 @@ use yii\widgets\InputWidget;
  * @package trntv\aceeditor
  * @author Eugene Terentev <eugene@terentev.net>
  */
-class AceEditor extends InputWidget
-{   
-     /**
+class AceEditor extends InputWidget {
+
+    /**
      * @var boolean Read-only mode on/off (false=off - default)
      */
     public $readOnly = false;
-    
+
     /**
-     * @var string Programming Language Mode
+     * @var string|array Programming Language Mode
      */
     public $mode = 'html';
 
@@ -40,15 +40,19 @@ class AceEditor extends InputWidget
     /**
      * @inheritdoc
      */
-    public function init()
-    {
+    public function init() {
         parent::init();
         AceEditorAsset::register($this->getView());
         $editor_id = $this->getId();
         $editor_var = 'aceeditor_' . $editor_id;
         $this->getView()->registerJs("var {$editor_var} = ace.edit(\"{$editor_id}\")");
         $this->getView()->registerJs("{$editor_var}.setTheme(\"ace/theme/{$this->theme}\")");
-        $this->getView()->registerJs("{$editor_var}.getSession().setMode(\"ace/mode/{$this->mode}\")");
+        if (is_array($this->mode)) {
+            $mode = json_encode($this->mode);
+            $this->getView()->registerJs("{$editor_var}.getSession().setMode({$mode})");
+        } else {
+            $this->getView()->registerJs("{$editor_var}.getSession().setMode(\"ace/mode/{$this->mode}\")");
+        }
         $this->getView()->registerJs("{$editor_var}.setReadOnly({$this->readOnly})");
 
         $textarea_var = 'acetextarea_' . $editor_id;
@@ -67,8 +71,7 @@ class AceEditor extends InputWidget
     /**
      * @inheritdoc
      */
-    public function run()
-    {
+    public function run() {
         $content = Html::tag('div', '', $this->containerOptions);
         if ($this->hasModel()) {
             $content .= Html::activeTextarea($this->model, $this->attribute, $this->options);
@@ -77,4 +80,5 @@ class AceEditor extends InputWidget
         }
         return $content;
     }
+
 }
